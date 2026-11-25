@@ -3,215 +3,174 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TPU 메가커널 해부</title>
-<meta name="description" content="TPU v7에서 Kimi K3를 메가커널 하나로 빠르게 돌리는 방법을 그림으로 설명합니다.">
+<title>TPU 요리 교실</title>
+<meta name="description" content="AI 칩 TPU가 어떻게 더 빨리 일하는지 주방 이야기로 쉽게 알아봐요.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;500;700&family=Inter:wght@400;600&family=Noto+Sans+KR:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap">
 <style>
-/* VOICE work: a technical explainer for engineers, calm and exact
-   IDEA an oscilloscope trace of the memory bus during one decode step
-   PICTURE live timeline: HBM lane vs compute lane, toggle "kernels" vs "megakernel"
-   COLOUR plum-black ground, white ink, rose = HBM traffic, dusk = compute, lime = idle bubbles
-   TYPE Inter Tight 300 large + Inter / Noto Sans KR
-   LAYOUT title across top, timeline full width, figures in a ruled row; phone stacks */
-:root{color-scheme:dark;--bg:#1a0f1f;--bg2:#24152b;--ink:#fff;--mute:#c9bcd3;--rose:#ff8fa3;--dusk:#8f7aa8;--lime:#d7f27a;--rule:#3b2a44}
+/* VOICE everyday learning for 8-12 year olds: warm, playful, very clear
+   IDEA a kitchen: the TPU is a chef, memory is a far-away pantry, the megakernel is a helper who fetches ahead
+   PICTURE two kitchens racing side by side, counting finished dishes
+   COLOUR butter yellow ground, tomato red, mint green, ink brown
+   TYPE Jua display + Noto Sans KR text
+   LAYOUT title across the top, race full width under it; phone stacks */
+:root{color-scheme:light;--bg:#fff6d6;--card:#fff;--ink:#3a2a1f;--mute:#6b5646;--red:#e8483b;--mint:#2fb39a;--sky:#5b8def;--line:#f0dfa8}
 *{box-sizing:border-box;min-width:0}
-html{scroll-padding-top:72px}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,"Noto Sans KR",system-ui,sans-serif;overflow-x:clip;word-break:keep-all}
-h1,h2,h3{font-family:"Inter Tight","Noto Sans KR",sans-serif;letter-spacing:-.02em;line-height:1.1;margin:0;text-wrap:balance}
-h1{font-weight:300;font-size:clamp(34px,5.4vw,60px)}
-h2{font-weight:500;font-size:clamp(26px,3.4vw,38px);margin-bottom:12px}
-h3{font-weight:600;font-size:18px;margin-bottom:6px}
-p{margin:0 0 12px;max-width:68ch;color:var(--mute)}
-b,strong{color:var(--ink)}
-a{color:var(--rose)}
-.band{padding:clamp(28px,4vw,64px) max(5vw,16px)}
-.wrap{max-width:1240px;margin:0 auto}
-.alt{background:var(--bg2)}
-nav{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--rule)}
-nav .wrap{display:flex;gap:6px;overflow-x:auto;padding:8px max(5vw,16px)}
-nav a{flex:none;color:var(--mute);text-decoration:none;padding:10px 12px;border-radius:8px;font-size:14px}
-nav a:hover,nav a:focus-visible{color:var(--ink);background:var(--rule);outline:none}
-.lede{font-size:18px;max-width:60ch;margin-top:14px}
-.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(11em,1fr));border-top:1px solid var(--rule);margin-top:28px}
-.figs div{padding:16px 16px 4px 0;border-right:1px solid var(--rule)}
-.figs div:last-child{border-right:0}
-.big{font-family:"Inter Tight",sans-serif;font-weight:300;font-size:clamp(34px,4.6vw,52px);line-height:1;white-space:nowrap}
-.big small{font-size:.4em;color:var(--mute);margin-left:4px}
-.cap{font-size:14px;color:var(--mute);margin-top:6px}
-.panel{background:var(--bg2);border:1px solid var(--rule);border-radius:14px;padding:18px}
-.alt .panel{background:var(--bg)}
-.seg{display:inline-flex;border:1px solid var(--rule);border-radius:10px;padding:3px;gap:3px;flex-wrap:wrap}
-.seg button{font:600 15px/1 Inter,"Noto Sans KR",sans-serif;color:var(--mute);background:none;border:0;border-radius:8px;padding:0 14px;min-height:44px;cursor:pointer}
-.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
-.seg button:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
-.row{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;margin:18px 0 12px}
-.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--mute)}
-.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
-.fig{position:relative;min-height:260px}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.7 "Noto Sans KR",system-ui,sans-serif;overflow-x:clip;word-break:keep-all}
+h1,h2,h3{font-family:Jua,"Noto Sans KR",sans-serif;font-weight:400;line-height:1.15;margin:0;text-wrap:balance}
+h1{font-size:clamp(36px,6vw,60px)}
+h2{font-size:clamp(28px,4vw,40px);margin-bottom:10px}
+h3{font-size:22px;margin-bottom:4px}
+p{margin:0 0 12px;max-width:62ch}
+.band{padding:clamp(28px,4vw,60px) max(5vw,16px)}
+.wrap{max-width:1100px;margin:0 auto}
+.white{background:var(--card)}
+.lede{font-size:19px;margin-top:12px}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,2.5vw,24px)}
+.white .card{background:var(--bg)}
+.fig{position:relative;min-height:330px}
 .fig>svg{position:absolute;inset:0;width:100%;height:100%}
-svg text{font:13px Inter,"Noto Sans KR",sans-serif;fill:var(--mute)}
-.meter{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px 14px;align-items:center;font-size:14px;margin-top:12px}
-.track{height:14px;background:var(--rule);border-radius:7px;overflow:hidden}
-.track span{display:block;height:100%;background:var(--rose);border-radius:7px;transition:width .6s}
-.num{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
-.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(20px,3vw,40px);align-items:start}
-.stackmem{display:grid;gap:10px}
-.mem{border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:baseline}
-.mem .k{font-weight:600}.mem .v{font-family:"Inter Tight",sans-serif;font-size:22px;white-space:nowrap}
-.mem p{grid-column:1/-1;margin:0;font-size:14px}
-.arrow{justify-self:center;color:var(--mute);font-size:14px}
-table{border-collapse:collapse;width:100%;font-size:15px}
-th,td{padding:10px 8px;border-bottom:1px solid var(--rule);text-align:right;white-space:nowrap}
-th:first-child,td:first-child{text-align:left}
-th{color:var(--mute);font-weight:600}
-.scroll{overflow-x:auto}
-.layers{display:grid;grid-template-columns:repeat(23,minmax(0,1fr));gap:4px;margin:16px 0}
-.layers i{height:22px;border-radius:3px;background:var(--rule);transition:background .2s}
-.layers i.done{background:#4a3655}
-.layers i.run{background:var(--dusk)}
-.layers i.pre{background:var(--rose)}
-.chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
-.host{border:1px solid var(--rule);border-radius:10px;padding:8px}
-.host>div{font-size:13px;color:var(--mute);margin-bottom:6px}
-.tcs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
-.tcs span{aspect-ratio:1;border-radius:4px;display:grid;place-items:center;font-size:12px;color:#1a0f1f;font-weight:600}
-input[type=range]{width:100%;accent-color:var(--rose);height:44px}
-.calc{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:24px;align-items:center}
-.rows{display:grid;gap:4px;margin-top:10px}
-.rows div{height:18px;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:12px;color:#1a0f1f;font-weight:600}
-.bars{display:grid;grid-template-columns:max-content minmax(0,1fr) max-content;gap:8px 14px;align-items:center;font-size:14px}
-.bars .b{height:22px;border-radius:4px}
-.bars .lbl{color:var(--mute)}
-.grp{grid-column:1/-1;color:var(--ink);font-weight:600;margin-top:14px}
-code{background:var(--rule);padding:2px 6px;border-radius:5px;font-size:14px;overflow-wrap:anywhere}
-footer{border-top:1px solid var(--rule);font-size:14px;color:var(--mute)}
-footer li{margin-bottom:6px}
-@media(max-width:760px){.two,.calc{grid-template-columns:minmax(0,1fr)}.chips{grid-template-columns:repeat(2,minmax(0,1fr))}.layers{grid-template-columns:repeat(12,minmax(0,1fr))}}
-@media(max-width:600px){.figs div{border-right:0;border-bottom:1px solid var(--rule)}table{font-size:13px}th,td{padding:8px 4px}}
+svg text{font-family:Jua,"Noto Sans KR",sans-serif;font-size:16px;fill:var(--ink)}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+button{font:20px/1 Jua,"Noto Sans KR",sans-serif;min-height:48px;padding:0 20px;border-radius:24px;border:3px solid var(--ink);background:var(--card);color:var(--ink);cursor:pointer;box-shadow:0 4px 0 var(--ink)}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+button:focus-visible{outline:3px solid var(--sky);outline-offset:3px}
+button.go{background:var(--red);color:#fff}
+.score{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.score div{border-radius:16px;padding:10px 14px;color:#fff}
+.score b{font-family:Jua,sans-serif;font-size:34px;font-weight:400;display:block;line-height:1.1}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(16px,3vw,32px);align-items:center}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}
+.who{text-align:center}
+.who svg{width:100%;max-width:150px;height:auto;display:block;margin:0 auto 6px}
+.who p{margin:0 auto;font-size:15px;color:var(--mute)}
+.floors{display:grid;grid-template-columns:repeat(23,minmax(0,1fr));gap:3px;margin:14px 0 8px}
+.floors i{height:20px;border-radius:4px;background:var(--line);transition:background .15s}
+.floors i.done{background:var(--mint)}
+.floors i.now{background:var(--red)}
+.floors i.next{background:#ffc94a}
+.team{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin-top:12px;max-width:520px}
+.team span{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-family:Jua,sans-serif;color:#fff;font-size:15px}
+.words{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.words span{font-family:Jua,sans-serif;font-size:20px;padding:6px 14px;border-radius:14px;background:var(--line)}
+.words .ok{background:var(--mint);color:#fff}
+.words .no{background:#f6c3bd;color:var(--ink);text-decoration:line-through}
+.words .base{background:var(--ink);color:#fff}
+.bar{display:grid;grid-template-columns:max-content minmax(0,1fr) max-content;gap:10px 14px;align-items:center;margin-top:10px}
+.bar .b{height:34px;border-radius:10px}
+.bar .n{font-family:Jua,sans-serif;font-size:22px;white-space:nowrap}
+.quiz{display:grid;gap:16px}
+.q .btns button{font-size:18px}
+.fb{min-height:1.7em;font-weight:700}
+.gl{font-size:15px;color:var(--mute)}
+.gl dt{font-weight:700;color:var(--ink);margin-top:8px}
+.gl dd{margin:0}
+a{color:var(--sky)}
+@media(max-width:700px){.two{grid-template-columns:minmax(0,1fr)}.three{grid-template-columns:minmax(0,1fr)}.floors{grid-template-columns:repeat(12,minmax(0,1fr))}.who{display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px;text-align:left;align-items:center}.who svg{margin:0}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<nav aria-label="섹션"><div class="wrap">
-<a href="#bus">메모리 버스</a><a href="#tpu">TPU v7 구조</a><a href="#layers">92개 레이어</a><a href="#shard">32개 코어 분할</a><a href="#spec">추측 디코딩</a><a href="#bench">벤치마크</a><a href="#src">출처</a>
-</div></nav>
 
 <header class="band"><div class="wrap">
-<h1>커널 수백 개를 하나로 합치자<br>Kimi K3가 TPU에서 초당 709토큰을 냈다</h1>
-<p class="lede">디코딩은 연산이 아니라 <b>HBM에서 가중치를 읽어오는 속도</b>에 묶입니다. Inferact는 Kimi K3의 디코드 한 스텝 전체를 Pallas 프로그램 <b>하나</b>로 작성해 메모리 버스가 쉬는 틈을 없앴습니다. 아래 타임라인에서 그 차이를 직접 확인해 보세요.</p>
-<div class="figs">
-<div><div class="big">709<small>tok/s</small></div><div class="cap">Kimi K3, TPU v7 16개 (GB200 16개는 452)</div></div>
-<div><div class="big">1.57<small>×</small></div><div class="cap">같은 칩 수 GB200 대비 처리량</div></div>
-<div><div class="big">8.5<small>ms</small></div><div class="cap">디코드 1스텝 (DSpark 검증 포함)</div></div>
-<div><div class="big">&lt;90<small>초</small></div><div class="cap">메가커널 컴파일 (XLA 전체 모델은 30분+)</div></div>
+<h1>AI 칩은 어떻게 더 빨리 일할까?</h1>
+<p class="lede">구글이 만든 AI 칩 <b>TPU</b>를 <b>주방의 요리사</b>라고 생각해 봐요. 요리사는 엄청 빠른데, 재료가 멀리 있는 창고에 있어요. 재료를 가지러 왔다 갔다 하다 보면 시간이 다 가 버리죠. 어떻게 하면 더 빨라질까요? 아래 <b>요리 시합</b>을 시작해 보세요!</p>
+
+<div class="card" style="margin-top:20px">
+<div class="fig" id="race"><svg aria-label="두 주방의 요리 시합"></svg></div>
+<div class="btns"><button class="go" id="start">요리 시합 시작!</button><button id="reset">처음부터</button></div>
+<div class="score">
+<div style="background:var(--sky)">혼자 하는 요리사<b id="sa">0 접시</b></div>
+<div style="background:var(--red)">조수와 함께하는 요리사<b id="sb">0 접시</b></div>
+</div>
+<p id="msg" style="margin:12px 0 0;font-weight:700"></p>
 </div>
 </div></header>
 
-<section class="band alt" id="bus"><div class="wrap">
-<h2>메모리 버스가 쉬는 순간이 곧 낭비입니다</h2>
-<p>커널을 따로따로 실행하면 각 커널은 "가중치 읽기 → 계산 → 결과 쓰기"를 반복하고, 계산하는 동안과 다음 커널이 뜨는 사이에 HBM 대역폭이 놀게 됩니다(버블). 메가커널은 한 프로그램 안에서 <b>다음 레이어의 가중치를 미리 DMA로 당겨오기</b> 때문에 버스가 계속 일합니다.</p>
-<div class="row">
-<div class="seg" role="group" aria-label="실행 방식">
-<button id="m-k" aria-pressed="true">커널 여러 개</button>
-<button id="m-m" aria-pressed="false">메가커널 하나</button>
+<section class="band white"><div class="wrap">
+<h2>주방 친구들을 소개할게요</h2>
+<p>TPU 안에는 세 친구가 살아요. 진짜 이름은 어렵지만, 주방으로 바꾸면 쉬워요.</p>
+<div class="three">
+<div class="who card">
+<svg viewBox="0 0 150 110" aria-hidden="true"><rect x="10" y="20" width="130" height="85" rx="10" fill="#c98b5a"/><rect x="10" y="20" width="130" height="16" rx="8" fill="#a86b3c"/><g fill="#ffc94a"><rect x="22" y="46" width="24" height="24" rx="4"/><rect x="52" y="46" width="24" height="24" rx="4"/><rect x="82" y="46" width="24" height="24" rx="4"/><rect x="112" y="46" width="18" height="24" rx="4"/><rect x="22" y="76" width="24" height="22" rx="4"/><rect x="52" y="76" width="24" height="22" rx="4"/><rect x="82" y="76" width="24" height="22" rx="4"/></g></svg>
+<div><h3>큰 창고 (HBM)</h3><p>재료(AI가 외운 지식)가 아주 많이 들어 있어요. 하지만 주방에서 <b>멀어요</b>.</p></div>
 </div>
-<div class="legend"><span><i style="background:var(--rose)"></i>HBM → VMEM 가중치 전송</span><span><i style="background:var(--dusk)"></i>MXU/벡터 계산</span><span><i style="background:var(--lime)"></i>버스 유휴(버블)</span></div>
+<div class="who card">
+<svg viewBox="0 0 150 110" aria-hidden="true"><rect x="15" y="50" width="120" height="14" rx="5" fill="#2fb39a"/><rect x="25" y="64" width="10" height="40" fill="#22806e"/><rect x="115" y="64" width="10" height="40" fill="#22806e"/><circle cx="45" cy="40" r="12" fill="#e8483b"/><circle cx="75" cy="38" r="14" fill="#ffc94a"/><rect x="95" y="28" width="22" height="22" rx="4" fill="#5b8def"/></svg>
+<div><h3>조리대 (VMEM)</h3><p>요리사 바로 옆에 있는 작은 탁자예요. 여기 올려 두면 <b>바로</b> 쓸 수 있어요.</p></div>
 </div>
-<div class="panel"><div class="fig" id="tl"><svg aria-label="디코드 스텝 타임라인"></svg></div>
-<div class="meter"><span>HBM 버스 사용률</span><div class="track"><span id="util-bar"></span></div><span class="num" id="util">0%</span>
-<span>스텝 시간</span><div class="track"><span id="time-bar" style="background:var(--dusk)"></span></div><span class="num" id="time">0</span></div>
+<div class="who card">
+<svg viewBox="0 0 150 110" aria-hidden="true"><rect x="55" y="6" width="40" height="22" rx="8" fill="#fff" stroke="#3a2a1f" stroke-width="3"/><circle cx="75" cy="44" r="18" fill="#f6c79c"/><circle cx="68" cy="42" r="2.5" fill="#3a2a1f"/><circle cx="82" cy="42" r="2.5" fill="#3a2a1f"/><path d="M68 51q7 6 14 0" stroke="#3a2a1f" stroke-width="2.5" fill="none"/><rect x="52" y="62" width="46" height="42" rx="12" fill="#fff" stroke="#3a2a1f" stroke-width="3"/></svg>
+<div><h3>요리사 (계산 장치)</h3><p>엄청나게 빠르게 계산해요. 그런데 <b>재료가 없으면</b> 아무것도 못 해요.</p></div>
 </div>
-<p class="cap">개념도입니다. 블록 길이는 원리를 보여주기 위한 상대값이며 실측 프로파일이 아닙니다.</p>
+</div>
 </div></section>
 
-<section class="band" id="tpu"><div class="wrap two">
+<section class="band"><div class="wrap two">
 <div>
-<h2>TPU는 온칩 메모리를 프로그래머가 직접 관리합니다</h2>
-<p>TPU v7의 각 TensorCore는 <b>64 MiB짜리 VMEM</b> 하나를 갖고, 데이터는 프로그램이 명시적으로 덮어쓸 때까지 그대로 남습니다. GPU처럼 하드웨어가 알아서 캐시를 바꾸지 않으니, 언제 무엇을 들여올지 커널이 정확히 정할 수 있습니다. 이것이 레이어 경계를 넘는 프리페치를 쉽게 만듭니다.</p>
-<p>메가커널은 <code>run_scoped</code>로 VMEM 할당의 수명을 나눕니다. 활성값(activations)은 전체 순전파 동안 상주하고, MLA KV 캐시 버퍼는 잠깐만 쓰고 비웁니다. 전송은 <code>make_async_copy(...).start()</code>로 시작하고 <code>.wait()</code>로 기다립니다.</p>
-<div class="scroll"><table>
-<thead><tr><th>칩 하나 기준</th><th>TPU v7</th><th>GB200 (B200)</th></tr></thead>
-<tbody>
-<tr><td>BF16 최대 연산</td><td>2.31 PFLOPS</td><td>2.5 PFLOPS</td></tr>
-<tr><td>FP8 최대 연산</td><td>4.61 PFLOPS</td><td>5 PFLOPS</td></tr>
-<tr><td>HBM 용량</td><td>206 GB</td><td>186 GB</td></tr>
-<tr><td>HBM 대역폭</td><td>7,380 GB/s</td><td>8,000 GB/s</td></tr>
-<tr><td>칩 간 연결</td><td>1,200 GB/s ICI</td><td>1,800 GB/s NVLink 5</td></tr>
-</tbody></table></div>
-<p class="cap">스펙만 보면 GB200이 대역폭에서 앞섭니다. 차이는 하드웨어가 아니라 그 대역폭을 얼마나 쉬지 않고 쓰느냐에서 나옵니다.</p>
+<h2>비밀 1: 다음 재료를 미리 가져다 놓기</h2>
+<p>예전에는 요리를 <b>작은 일 수백 개</b>로 쪼개서 하나 끝날 때마다 "다음 일 뭐예요?" 하고 기다렸어요. 그동안 창고 가는 길은 텅 비어 있었죠.</p>
+<p>그래서 개발자들은 모든 일을 <b>커다란 레시피 한 장</b>에 몽땅 적었어요. 이걸 <b>메가커널</b>이라고 불러요. 레시피가 한 장이니 조수는 다음에 뭐가 필요한지 미리 알고, 요리사가 지금 요리하는 동안 <b>다음 재료를 미리</b> 조리대에 올려놓아요.</p>
 </div>
-<div class="stackmem" aria-label="TPU 메모리 계층">
-<div class="mem" style="background:#3a1f2c"><span class="k">HBM</span><span class="v">206 GB</span><p>모든 가중치와 KV 캐시. 7,380 GB/s로 읽어옴</p></div>
-<div class="arrow">↓ 프로그램이 직접 발행하는 비동기 DMA</div>
-<div class="mem" style="background:#352a45"><span class="k">VMEM (TensorCore당)</span><span class="v">64 MiB</span><p>소프트웨어가 관리. 덮어쓰기 전까지 유지 → 다음 레이어 가중치를 미리 쌓아둘 수 있음</p></div>
-<div class="arrow">↓ 로드</div>
-<div class="mem" style="background:#2c2538"><span class="k">벡터 레지스터 → MXU</span><span class="v">VREG</span><p>행렬곱 유닛과 벡터 유닛이 실제 계산 수행</p></div>
-<div class="mem" style="background:var(--bg2);border:1px dashed var(--rule)"><span class="k">비교: GB200</span><span class="v">≈111 MiB</span><p>SRAM이 152개 SM에 흩어져 있고(Tensor Memory는 SM당 256 KB, 합계 약 38 MiB) 하드웨어가 스케줄링 → 레이어를 넘는 정교한 배치가 더 어렵습니다</p></div>
+<div class="card">
+<h3>AI가 글자 하나를 만들 때 = 92층 건물 오르기</h3>
+<p style="font-size:15px;color:var(--mute)">Kimi K3라는 AI는 글자 하나를 만들 때 92단계를 거쳐요. 빨간 칸이 지금 하는 단계, 노란 칸은 조수가 미리 재료를 가져오는 다음 단계예요.</p>
+<div class="floors" id="floors"></div>
+<p id="fstat" style="font-weight:700;margin:0"></p>
+<div class="btns"><button class="go" id="fgo">92층 오르기</button></div>
 </div>
 </div></section>
 
-<section class="band alt" id="layers"><div class="wrap">
-<h2>92개 MoE 레이어가 호출 한 번에 끝납니다</h2>
-<p>Kimi K3는 92개 MoE 레이어로 되어 있고, 각 레이어의 어텐션은 <b>KDA</b>(Kimi Delta Attention) 또는 <b>MLA</b>(Multi-head Latent Attention) 중 하나입니다. 메가커널은 레이어 번호에 따라 둘 중 하나를 고르고, <b>레이어 N이 라우팅된 전문가(MoE)와 통신을 처리하는 동안 레이어 N+1의 어텐션 가중치를 VMEM으로 옮깁니다.</b></p>
-<div class="row"><div class="seg"><button id="lp" aria-pressed="false">재생</button><button id="lr" aria-pressed="false">처음으로</button></div>
-<div class="legend"><span><i style="background:var(--dusk)"></i>지금 계산 중</span><span><i style="background:var(--rose)"></i>가중치 프리페치 중</span><span><i style="background:#4a3655"></i>완료</span></div></div>
-<div class="layers" id="lg" aria-label="92개 레이어 진행"></div>
-<p class="num" style="text-align:left" id="lstat">레이어 1 / 92</p>
-<div class="two" style="margin-top:12px">
-<div class="panel"><h3>레이어 하나 안의 순서</h3><p style="margin:0">RMSNorm → 어텐션(KDA 또는 MLA) → 잔차 → RMSNorm → 라우터 → 전문가 MoE → 칩 간 집합통신 → 잔차. 모두 같은 Pallas 프로그램 안이라 단계 사이에 커널 실행 대기가 없습니다.</p></div>
-<div class="panel"><h3>왜 XLA가 아니라 Pallas인가</h3><p style="margin:0">XLA는 연산 하나하나를 잘 최적화하지만, 92개 레이어에 걸친 데이터 이동 순서까지는 찾아내지 못합니다. Pallas로 직접 쓰면 무엇을, 어디에, 언제 둘지 엔지니어가 정하고, 컴파일도 30분 이상에서 90초 미만으로 줄어듭니다.</p></div>
-</div>
-</div></section>
-
-<section class="band" id="shard"><div class="wrap">
-<h2>16개 칩, 32개 TensorCore에 모델을 나눕니다</h2>
-<p>TPU v7 16개를 2×2×4 토폴로지로 묶어 TensorCore 32개를 씁니다(호스트 4대 × 코어 8개). 연산 종류마다 나누는 방식이 다릅니다. 버튼을 눌러 비교해 보세요.</p>
-<div class="seg" role="group" aria-label="분할 방식">
-<button data-s="att" aria-pressed="true">어텐션 헤드</button>
-<button data-s="moe" aria-pressed="false">라우팅 전문가</button>
-<button data-s="lat" aria-pressed="false">Latent→Hidden 투영</button>
-</div>
-<p id="sdesc" style="margin-top:14px"></p>
-<div class="chips" id="chips"></div>
-</div></section>
-
-<section class="band alt" id="spec"><div class="wrap">
-<h2>한 번에 8줄을 검증해 토큰 여러 개를 얻습니다</h2>
-<p>DSpark 추측 디코딩에서는 작은 드래프트 모델이 다음 토큰들을 미리 추측하고, 메가커널이 배치 크기 8(앵커 1줄 + 추측 7줄)로 한 번에 검증합니다. 스텝 시간은 약 8.5 ms로 거의 같으니, <b>받아들여지는 토큰 수만큼 처리량이 늘어납니다.</b></p>
-<div class="calc panel">
-<div>
-<label for="acc"><b>수락 길이(acceptance length)</b>: 스텝당 확정되는 토큰 수</label>
-<input type="range" id="acc" min="1" max="8" step="0.5" value="6">
-<label for="st"><b>스텝 시간</b>: <span id="stv">8.5</span> ms</label>
-<input type="range" id="st" min="6" max="14" step="0.5" value="8.5">
-<div class="rows" id="rows" aria-label="검증 배치 8줄"></div>
+<section class="band white"><div class="wrap two">
+<div class="card">
+<h3>요리사 32명이 한 팀!</h3>
+<div class="team" id="team"></div>
+<p style="font-size:15px;color:var(--mute);margin-top:10px">TPU 칩 16개 안에 요리사가 32명 있어요. 같은 색끼리 한 조예요.</p>
 </div>
 <div>
-<div class="big" id="tps">706<small>tok/s</small></div>
-<div class="cap" id="formula">6 토큰 ÷ 8.5 ms</div>
-<p class="cap" style="margin-top:14px">실제 드래프트 모델은 보통 스텝당 3~6개를 맞힙니다. 발표된 709 tok/s는 수락 길이 6 기준입니다.</p>
-</div>
+<h2>비밀 2: 나눠서 같이 하기</h2>
+<p>요리가 너무 크면 한 명이 다 못 해요. 그래서 <b>32명의 요리사</b>가 일을 나눠요. 어떤 요리사는 국을, 어떤 요리사는 반찬을 맡는 것처럼요.</p>
+<p>이때 중요한 건 <b>서로 말을 너무 많이 하지 않는 것</b>이에요. 멀리 있는 친구랑 이야기하면 시간이 걸리니까, 가까운 친구끼리 조를 짜요.</p>
 </div>
 </div></section>
 
-<section class="band" id="bench"><div class="wrap">
-<h2>같은 칩 수에서 TPU가 1.4~2.2배 빨랐습니다</h2>
-<p>모두 단일 사용자(저동시성) 디코딩 처리량, 단위는 초당 토큰입니다. GB200 쪽은 vLLM의 공개 레시피 설정입니다.</p>
-<div class="legend" style="margin:10px 0"><span><i style="background:var(--rose)"></i>TPU v7 + 메가커널</span><span><i style="background:var(--dusk)"></i>GB200</span></div>
-<div class="bars" id="bars"></div>
-<p class="cap" style="margin-top:16px">정확도 손실은 없습니다. 그리디 디코딩에서 Kimi K3는 TPU에서도 GPQA-Diamond 94.4%, GSM8K 97.2%로 GPU와 같았습니다. 배치 1·8 수치는 QbitAI 보도 기준입니다.</p>
+<section class="band"><div class="wrap">
+<h2>비밀 3: 미리 맞히기 게임</h2>
+<p>AI는 글을 <b>한 글자씩</b> 써요. 그런데 꼬마 도우미가 다음 낱말 7개를 <b>미리 맞혀 보고</b>, 큰 AI는 한 번에 쫙 <b>채점</b>만 해요. 맞힌 데까지는 한 번에 통과! 틀린 곳부터는 다시 해요.</p>
+<div class="card">
+<div class="words" id="words"></div>
+<p id="wmsg" style="font-weight:700"></p>
+<div class="btns"><button class="go" id="wgo">꼬마 도우미, 맞혀 봐!</button></div>
+<p style="font-size:15px;color:var(--mute);margin:0">한 번 채점하는 데 걸리는 시간은 거의 같아요. 그러니 많이 맞힐수록 글이 빨리 써져요. 실제로는 평균 <b>6개</b>쯤 한 번에 통과해요.</p>
+</div>
 </div></section>
 
-<footer class="band alt" id="src"><div class="wrap">
-<h2>출처와 직접 돌려보기</h2>
-<p>코드는 Apache-2.0으로 공개되어 있습니다. <code>kimi/decode_megakernel.py</code>가 메가커널 본체, <code>kimi/dspark.py</code>가 추측 디코딩, <code>collectives32.py</code>가 32코어 집합통신입니다. CPU에서 빠른 테스트: <code>JAX_PLATFORMS=cpu uv run pytest -m "not cpu32"</code></p>
-<ul>
-<li><a href="https://github.com/inferact/tpu-megakernels">inferact/tpu-megakernels (GitHub)</a></li>
-<li><a href="https://inferact.ai/blog/tpu-megakernels">700 TPS on Kimi K3: A Case for TPU Megakernels — G. Novack, X. Liu, J. Ma, W. Kwon (Inferact, 2026.9.23)</a></li>
-<li><a href="https://www.qbitai.com/2026/09/497425.html">QbitAI 보도 (배치 크기별 수치)</a></li>
-</ul>
-<p>이 페이지는 위 자료를 바탕으로 만든 비공식 해설입니다. 타임라인과 레이어 애니메이션은 원리를 보여주는 개념도입니다.</p>
+<section class="band white"><div class="wrap">
+<h2>그래서 얼마나 빨라졌을까?</h2>
+<p>같은 AI(Kimi K3)에게 1초 동안 글을 쓰게 했어요. 칩 16개끼리 비교한 결과예요.</p>
+<div class="bar">
+<span>TPU + 비밀 세 가지</span><div class="b" style="width:100%;background:var(--red)"></div><span class="n">709 글자</span>
+<span>다른 회사 칩 (GB200)</span><div class="b" style="width:64%;background:var(--sky)"></div><span class="n">452 글자</span>
+</div>
+<p style="margin-top:14px">TPU가 <b>1.5배 넘게</b> 빨랐어요! 칩이 더 힘센 게 아니에요. 오히려 창고에서 재료 가져오는 속도는 상대 칩이 조금 더 빨라요. <b>일하는 순서를 똑똑하게 짠 덕분</b>이에요. 그리고 빨라졌다고 답이 틀려지지도 않았어요.</p>
+<p style="font-size:15px;color:var(--mute)">여기서 "글자"는 AI가 글을 쓰는 작은 조각(토큰)을 말해요.</p>
+</div></section>
+
+<section class="band"><div class="wrap">
+<h2>퀴즈로 확인해 봐요</h2>
+<div class="quiz" id="quiz"></div>
+</div></section>
+
+<footer class="band white"><div class="wrap">
+<h2 style="font-size:26px">선생님과 어른을 위한 설명</h2>
+<dl class="gl">
+<dt>요리사 = TensorCore, 조리대 = VMEM(코어당 64 MiB), 창고 = HBM</dt><dd>AI가 답을 만드는 단계(디코딩)는 계산보다 HBM에서 가중치를 읽어오는 속도에 막혀요.</dd>
+<dt>레시피 한 장 = 메가커널</dt><dd>Kimi K3의 92개 레이어 전체를 Pallas 프로그램 하나로 작성해, 레이어 N을 계산하는 동안 레이어 N+1의 가중치를 미리 DMA로 가져옵니다. 컴파일 시간도 30분 이상에서 90초 미만으로 줄었어요.</dd>
+<dt>32명의 요리사 = TPU v7 16개의 TensorCore 32개</dt><dd>어텐션 헤드는 32개로, 전문가(MoE)는 TP4 × EP8로 나눕니다.</dd>
+<dt>미리 맞히기 = DSpark 추측 디코딩</dt><dd>앵커 1개와 추측 7개를 한 번에 검증해요. 스텝당 약 8.5 ms, 평균 수락 길이 6 → 초당 약 709 토큰.</dd>
+<dt>주의</dt><dd>요리 시합 애니메이션은 원리를 보여주는 그림이며 실제 측정값이 아니에요.</dd>
+</dl>
+<p class="gl" style="margin-top:14px">출처: <a href="https://inferact.ai/blog/tpu-megakernels">Inferact 블로그 "700 TPS on Kimi K3"</a> · <a href="https://github.com/inferact/tpu-megakernels">inferact/tpu-megakernels (GitHub)</a></p>
 </div></footer>
 
 <script>
@@ -219,133 +178,88 @@ footer li{margin-bottom:6px}
 const $=s=>document.querySelector(s);
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* ---- 1. bus timeline ---- */
-let mode='k';
-const L=5;
-function plan(m){
-  const hbm=[],cmp=[];let t=0;
-  if(m==='k'){
-    for(let i=0;i<L;i++){
-      for(const [w,c] of [[3,2],[4,3]]){ // attention kernel, moe kernel
-        t+=1; // launch gap
-        hbm.push([t,w]);t+=w;cmp.push([t,c]);t+=c;
-      }
-    }
+/* ---- race ---- */
+const svg=$('#race svg');
+const U=900; // ms per time unit
+let t=0,run=false,last=0,raf=0;
+const chef=(x,y,c)=>`<g transform="translate(${x},${y})"><rect x="-13" y="-58" width="26" height="14" rx="5" fill="#fff" stroke="#3a2a1f" stroke-width="2.5"/><circle cy="-32" r="13" fill="#f6c79c"/><circle cx="-4" cy="-33" r="1.8" fill="#3a2a1f"/><circle cx="4" cy="-33" r="1.8" fill="#3a2a1f"/><rect x="-15" y="-19" width="30" height="26" rx="9" fill="${c}"/></g>`;
+const box=(x,y)=>`<rect x="${x-9}" y="${y-48}" width="18" height="15" rx="3" fill="#ffc94a" stroke="#3a2a1f" stroke-width="2"/>`;
+function lane(y,W,label,col,mode){
+  const sx=W<520?36:60, cx=W-(W<520?70:110), p=[];
+  p.push(`<text x="${sx-24}" y="${y-78}">${label}</text>`);
+  p.push(`<rect x="${sx-30}" y="${y-60}" width="56" height="62" rx="8" fill="#c98b5a"/><rect x="${sx-30}" y="${y-60}" width="56" height="12" rx="6" fill="#a86b3c"/><text x="${sx-2}" y="${y+22}" text-anchor="middle" style="font-size:14px">창고</text>`);
+  p.push(`<line x1="${sx+30}" x2="${cx-40}" y1="${y+4}" y2="${y+4}" stroke="#f0dfa8" stroke-width="6" stroke-dasharray="2 10" stroke-linecap="round"/>`);
+  p.push(`<rect x="${cx-34}" y="${y-14}" width="96" height="14" rx="5" fill="#2fb39a"/><text x="${cx+14}" y="${y+22}" text-anchor="middle" style="font-size:14px">조리대</text>`);
+  const L=cx-sx-30;
+  if(mode==='a'){
+    const ph=t%3;let x,carry=false,cooking=false;
+    if(ph<1)x=cx-L*ph; else if(ph<2){x=sx+30+L*(ph-1)-30;carry=true} else {x=cx;cooking=true}
+    p.push(chef(x,y,col)); if(carry)p.push(box(x,y));
+    if(cooking)p.push(pot(cx+34,y,ph-2));
   }else{
-    let h=0,c=0;
-    for(let i=0;i<L;i++){
-      for(const [w,cc] of [[3,2],[4,3]]){
-        hbm.push([h,w]);h+=w;
-        const s=Math.max(c,h-1.2);cmp.push([s,cc]);c=s+cc;
-      }
-    }
-    t=Math.max(h,c);
+    const ph=t%2;let hx,carry;
+    if(ph<1){hx=cx-L*ph;carry=false}else{hx=sx+L*(ph-1);carry=true}
+    p.push(chef(hx,y,'#ffc94a')); if(carry)p.push(box(hx,y));
+    p.push(`<text x="${hx}" y="${y+40}" text-anchor="middle" style="font-size:13px;fill:#6b5646">조수</text>`);
+    const cooking=t>=2&&(t%2)<1;
+    p.push(chef(cx+34,y,col)); if(cooking)p.push(pot(cx+34,y,t%2,true));
   }
-  return {hbm,cmp,T:t};
+  return p.join('');
 }
-const KT=plan('k').T;
-const tl=$('#tl svg');
-let prog=1,raf=0;
-function drawTL(){
-  const W=tl.clientWidth,H=tl.clientHeight,p=plan(mode),x0=W<520?70:110,x1=W-12,sc=(x1-x0)/KT;
-  const lane=(y,lab)=>`<text x="0" y="${y+26}">${lab}</text><rect x="${x0}" y="${y}" width="${(x1-x0)}" height="40" rx="4" fill="#2a1a30"/>`;
-  const yH=H*0.18,yC=H*0.52,cut=p.T*prog;
-  let s=lane(yH,W<520?'HBM':'HBM 버스')+lane(yC,W<520?'계산':'계산 유닛');
-  let busy=0;
-  p.hbm.forEach(([a,w])=>{const e=Math.min(a+w,cut);if(e>a){busy+=e-a;s+=`<rect x="${x0+a*sc}" y="${yH}" width="${(e-a)*sc}" height="40" rx="3" fill="var(--rose)"/>`}});
-  // bubbles on HBM lane
-  let last=0;const gaps=[];
-  p.hbm.forEach(([a,w])=>{if(a>last)gaps.push([last,a]);last=a+w});
-  if(p.T>last)gaps.push([last,p.T]);
-  gaps.forEach(([a,b])=>{const e=Math.min(b,cut);if(e>a)s+=`<rect x="${x0+a*sc}" y="${yH+14}" width="${(e-a)*sc}" height="12" rx="2" fill="var(--lime)" opacity=".85"/>`});
-  p.cmp.forEach(([a,w])=>{const e=Math.min(a+w,cut);if(e>a)s+=`<rect x="${x0+a*sc}" y="${yC}" width="${(e-a)*sc}" height="40" rx="3" fill="var(--dusk)"/>`});
-  const px=x0+cut*sc;
-  s+=`<line x1="${px}" x2="${px}" y1="${yH-10}" y2="${yC+50}" stroke="#fff" stroke-width="1.5"/>`;
-  s+=`<line x1="${x0+p.T*sc}" x2="${x0+p.T*sc}" y1="${yC+50}" y2="${H-26}" stroke="var(--mute)" stroke-dasharray="3 3"/><text x="${Math.min(x0+p.T*sc,x1)}" y="${H-8}" text-anchor="end">스텝 끝</text>`;
-  s+=`<text x="${x0}" y="${H-8}">레이어 ${L}개 구간 (어텐션 + MoE)</text>`;
-  tl.innerHTML=s;
-  const u=cut>0?Math.round(busy/cut*100):0;
-  $('#util').textContent=u+'%';$('#util-bar').style.width=u+'%';
-  $('#time').textContent=Math.round(p.T/KT*100)+'%';$('#time-bar').style.width=(p.T/KT*100)+'%';
+function pot(x,y,k,small){const h=6+10*Math.sin(k*Math.PI);return `<ellipse cx="${x}" cy="${y-16}" rx="${small?10:14}" ry="${h/2+2}" fill="#e8483b" opacity=".85"/>`}
+function dishes(){const a=Math.floor(t/3),b=t<3?0:Math.floor((t-3)/2)+1;return [a,b]}
+function draw(){
+  const W=svg.clientWidth,H=svg.clientHeight;
+  svg.innerHTML=lane(H*0.36,W,'혼자 하는 요리사','#5b8def','a')+lane(H*0.86,W,'조수와 함께하는 요리사','#e8483b','b');
+  const [a,b]=dishes();
+  $('#sa').textContent=a+' 접시';$('#sb').textContent=b+' 접시';
+  $('#msg').textContent=t<0.05?'버튼을 눌러 보세요.':b>a?`조수가 있는 쪽이 ${b-a}접시 앞서요! 요리사가 재료를 기다리지 않으니까요.`:'두 요리사가 출발했어요…';
 }
-const roT=new ResizeObserver(drawTL);roT.observe(tl);
-function play(){
-  cancelAnimationFrame(raf);
-  if(reduce){prog=1;drawTL();return}
-  prog=0;const t0=performance.now();
-  const step=n=>{prog=Math.min(1,(n-t0)/2600);drawTL();if(prog<1)raf=requestAnimationFrame(step)};
-  raf=requestAnimationFrame(step);
-}
-function setMode(m){mode=m;$('#m-k').setAttribute('aria-pressed',m==='k');$('#m-m').setAttribute('aria-pressed',m==='m');play()}
-$('#m-k').onclick=()=>setMode('k');$('#m-m').onclick=()=>setMode('m');
-play();
+const roR=new ResizeObserver(draw);roR.observe(svg);
+function loop(n){if(!run)return;t+=(n-last)/U;last=n;if(t>24){t=24;run=false;$('#start').textContent='다시 시작!'}draw();if(run)raf=requestAnimationFrame(loop)}
+$('#start').onclick=()=>{if(t>=24)t=0;if(reduce){t=24;draw();return}run=!run;$('#start').textContent=run?'잠깐 멈춤':'계속하기';if(run){last=performance.now();raf=requestAnimationFrame(loop)}};
+$('#reset').onclick=()=>{run=false;cancelAnimationFrame(raf);t=0;$('#start').textContent='요리 시합 시작!';draw()};
 
-/* ---- 2. 92 layers ---- */
-const N=92,lg=$('#lg');
-lg.innerHTML=Array.from({length:N},(_,i)=>`<i title="레이어 ${i+1}"></i>`).join('');
-const cells=[...lg.children];let cur=0,timer=0;
-function showL(){
-  cells.forEach((c,i)=>{c.className=i<cur?'done':i===cur?'run':i===cur+1?'pre':''});
-  $('#lstat').textContent=cur<N?`레이어 ${cur+1} 계산 중 · 레이어 ${Math.min(cur+2,N)} 가중치 프리페치 중 (${N}개 중)`:'92개 레이어 완료 → 다음 토큰';
-}
-function stopL(){clearInterval(timer);timer=0;$('#lp').textContent='재생';$('#lp').setAttribute('aria-pressed','false')}
-$('#lp').onclick=()=>{
-  if(timer){stopL();return}
-  if(cur>=N)cur=0;
-  $('#lp').textContent='일시정지';$('#lp').setAttribute('aria-pressed','true');
-  timer=setInterval(()=>{cur++;showL();if(cur>=N)stopL()},reduce?20:90);
-};
-$('#lr').onclick=()=>{stopL();cur=0;showL()};
-showL();
+/* ---- 92 floors ---- */
+const fl=$('#floors');fl.innerHTML=Array.from({length:92},()=>'<i></i>').join('');
+const fc=[...fl.children];let f=-1,ft=0;
+function showF(){fc.forEach((c,i)=>c.className=i<f?'done':i===f?'now':i===f+1?'next':'');$('#fstat').textContent=f<0?'아직 출발 전이에요.':f>=92?'92층 도착! 글자 하나 완성!':`${f+1}층에서 일하는 중 · 조수는 ${Math.min(f+2,92)}층 재료를 미리 가져오는 중`}
+$('#fgo').onclick=()=>{clearInterval(ft);f=0;showF();ft=setInterval(()=>{f++;showF();if(f>=92)clearInterval(ft)},reduce?5:70)};
+showF();
 
-/* ---- 3. sharding ---- */
-const pal=['#ff8fa3','#8f7aa8','#d7f27a','#7ad7f2','#f2c27a','#c4a3ff','#7af2b5','#f27ad0'];
-const SD={
-  att:{d:'어텐션 헤드를 32개 코어 전체에 나눕니다. 코어마다 헤드 일부를 맡아 동시에 계산합니다.',f:i=>[pal[0],'H'+(i+1)]},
-  moe:{d:'라우팅 전문가는 TP4 × EP8: 전문가 묶음 8개(색)를 각각 코어 4개가 텐서 병렬로 나눠 계산합니다.',f:i=>{const g=Math.floor(i/4);return [pal[g],'E'+(g+1)]}},
-  lat:{d:'MoE latent→hidden 투영은 호스트 안의 코어 8개에 나누고, 4개 호스트에는 같은 것을 복제합니다. 느린 호스트 간 통신을 줄이기 위해서입니다.',f:i=>[pal[1],String(i%8+1)]}
-};
-function shard(k){
-  document.querySelectorAll('[data-s]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===k));
-  $('#sdesc').textContent=SD[k].d;
-  let h='';
-  for(let hi=0;hi<4;hi++){
-    h+=`<div class="host"><div>호스트 ${hi+1} · 칩 4개</div><div class="tcs">`;
-    for(let j=0;j<8;j++){const [c,l]=SD[k].f(hi*8+j);h+=`<span style="background:${c}">${l}</span>`}
-    h+='</div></div>';
-  }
-  $('#chips').innerHTML=h;
-}
-document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>shard(b.dataset.s));
-shard('att');
+/* ---- team ---- */
+const tc=['#e8483b','#2fb39a','#5b8def','#ffb020','#9b6bd6','#e86fae','#3a9ad9','#7cb342'];
+$('#team').innerHTML=Array.from({length:32},(_,i)=>`<span style="background:${tc[Math.floor(i/4)]}">${i+1}</span>`).join('');
 
-/* ---- 4. spec decoding ---- */
-function calc(){
-  const a=+$('#acc').value,st=+$('#st').value;
-  $('#stv').textContent=st;
-  $('#tps').innerHTML=Math.round(a/st*1000)+'<small>tok/s</small>';
-  $('#formula').textContent=`${a} 토큰 ÷ ${st} ms = 스텝당 ${a}개 확정`;
-  let r='';
-  for(let i=0;i<8;i++){
-    const ok=i<Math.floor(a),half=i===Math.floor(a)&&a%1;
-    const lab=i===0?'앵커':'추측 '+i;
-    r+=`<div style="width:${100-i*6}%;background:${ok?'var(--rose)':half?'#c78a99':'var(--rule)'};color:${ok||half?'#1a0f1f':'var(--mute)'}">${lab}${ok?' ✓':''}</div>`;
-  }
-  $('#rows').innerHTML=r;
-}
-$('#acc').oninput=calc;$('#st').oninput=calc;calc();
-
-/* ---- 5. benchmarks ---- */
-const B=[
-  ['Kimi K3 + DSpark (16칩)',709,452],
-  ['Qwen3.8-27B + DFlash2 (4칩)',1515,695],
-  ['Kimi K3, 배치 1, 추측 없음',249,127],
-  ['Kimi K3, 배치 8, 추측 없음',865,636]
+/* ---- guessing game ---- */
+const base='오늘';
+const answer=['아침에','우유를','마시고','학교에','가서','친구와','놀았다'];
+const tries=[
+  ['아침에','우유를','마시고','학교에','가서','친구와','놀았다'],
+  ['아침에','우유를','마시고','학교에','가서','밥을','먹었다'],
+  ['아침에','빵을','먹고','학교에','갔다','그리고','잤다'],
+  ['아침에','우유를','마시고','공원에','가서','친구와','놀았다'],
+  ['저녁에','우유를','마시고','학교에','가서','친구와','놀았다']
 ];
-const mx=Math.max(...B.flatMap(b=>[b[1],b[2]]));
-$('#bars').innerHTML=B.map(([n,t,g])=>`<div class="grp">${n} <span class="num" style="color:var(--rose);margin-left:6px">${(t/g).toFixed(2)}×</span></div>
-<span class="lbl">TPU v7</span><div class="b" style="width:${t/mx*100}%;background:var(--rose)"></div><span class="num">${t.toLocaleString()}</span>
-<span class="lbl">GB200</span><div class="b" style="width:${g/mx*100}%;background:var(--dusk)"></div><span class="num">${g.toLocaleString()}</span>`).join('');
+let ti=-1;
+function showW(){
+  if(ti<0){$('#words').innerHTML=`<span class="base">${base}</span>`+answer.map(()=>'<span>?</span>').join('');$('#wmsg').textContent='큰 AI가 "오늘"까지 썼어요. 다음 낱말 7개를 맞혀 볼까요?';return}
+  const g=tries[ti];let ok=0;while(ok<7&&g[ok]===answer[ok])ok++;
+  $('#words').innerHTML=`<span class="base">${base}</span>`+g.map((w,i)=>`<span class="${i<ok?'ok':'no'}">${w}</span>`).join('');
+  const got=ok+(ok<7?1:0);
+  $('#wmsg').textContent=ok===7?'7개 모두 정답! 한 번 채점으로 낱말 7개를 얻었어요.':`${ok}개 맞혔어요. 큰 AI가 틀린 자리를 고쳐 주니까 한 번 채점으로 낱말 ${got}개를 얻었어요. 한 글자씩 썼다면 ${got}번 걸렸을 거예요!`;
+}
+$('#wgo').onclick=()=>{ti=(ti+1)%tries.length;showW()};
+showW();
+
+/* ---- quiz ---- */
+const Q=[
+  ['요리사(계산 장치)가 느려지는 가장 큰 이유는?',['손이 느려서','재료를 기다려서','배가 고파서'],1,'맞아요! 요리사는 빠른데 멀리 있는 창고에서 재료가 오기를 기다리느라 느려져요.'],
+  ['메가커널은 무엇과 비슷할까요?',['모든 일을 적은 커다란 레시피 한 장','더 큰 냉장고','요리사를 쉬게 하는 의자'],0,'정답! 레시피가 한 장이라 조수가 다음 재료를 미리 가져올 수 있어요.'],
+  ['미리 맞히기 게임에서 낱말을 많이 맞히면?',['글이 더 느려져요','한 번에 더 많이 써져요','답이 틀려져요'],1,'딩동댕! 채점 시간은 같으니 많이 맞힐수록 빨라지고, 틀린 건 큰 AI가 고쳐서 답은 그대로예요.']
+];
+$('#quiz').innerHTML=Q.map((q,i)=>`<div class="card q"><h3>${i+1}. ${q[0]}</h3><div class="btns">${q[1].map((o,j)=>`<button data-q="${i}" data-a="${j}">${o}</button>`).join('')}</div><p class="fb" id="fb${i}"></p></div>`).join('');
+document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const q=Q[+b.dataset.q],ok=+b.dataset.a===q[2];const fb=$('#fb'+b.dataset.q);fb.textContent=ok?q[3]:'아쉬워요, 다시 골라 볼까요?';fb.style.color=ok?'var(--mint)':'var(--red)'});
 }
 </script>
 </body>
