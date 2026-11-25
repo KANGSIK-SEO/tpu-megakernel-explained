@@ -3,263 +3,101 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TPU 요리 교실</title>
-<meta name="description" content="AI 칩 TPU가 어떻게 더 빨리 일하는지 주방 이야기로 쉽게 알아봐요.">
+<title>메가커널처럼 살기</title>
+<meta name="description" content="AI 칩 TPU의 메가커널에서 배우는 효율적으로 사는 법 5가지">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap">
 <style>
-/* VOICE everyday learning for 8-12 year olds: warm, playful, very clear
-   IDEA a kitchen: the TPU is a chef, memory is a far-away pantry, the megakernel is a helper who fetches ahead
-   PICTURE two kitchens racing side by side, counting finished dishes
-   COLOUR butter yellow ground, tomato red, mint green, ink brown
-   TYPE Jua display + Noto Sans KR text
-   LAYOUT title across the top, race full width under it; phone stacks */
-:root{color-scheme:light;--bg:#fff6d6;--card:#fff;--ink:#3a2a1f;--mute:#6b5646;--red:#e8483b;--mint:#2fb39a;--sky:#5b8def;--line:#f0dfa8}
+/* VOICE everyday, warm, very short
+   IDEA a day drawn like a chip timeline: stop-start vs one smooth flow
+   PICTURE two day-bars, gaps vs no gaps
+   COLOUR butter yellow, tomato red, mint, ink brown
+   TYPE Jua + Noto Sans KR
+   LAYOUT title, picture, five lesson cards, checklist */
+:root{color-scheme:light;--bg:#fff6d6;--card:#fff;--ink:#3a2a1f;--mute:#6b5646;--red:#e8483b;--mint:#2fb39a;--line:#f0dfa8}
 *{box-sizing:border-box;min-width:0}
 body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.7 "Noto Sans KR",system-ui,sans-serif;overflow-x:clip;word-break:keep-all}
 h1,h2,h3{font-family:Jua,"Noto Sans KR",sans-serif;font-weight:400;line-height:1.15;margin:0;text-wrap:balance}
-h1{font-size:clamp(36px,6vw,60px)}
-h2{font-size:clamp(28px,4vw,40px);margin-bottom:10px}
-h3{font-size:22px;margin-bottom:4px}
-p{margin:0 0 12px;max-width:62ch}
-.band{padding:clamp(28px,4vw,60px) max(5vw,16px)}
-.wrap{max-width:1100px;margin:0 auto}
+h1{font-size:clamp(36px,6vw,58px)}
+h2{font-size:clamp(26px,3.6vw,36px);margin-bottom:14px}
+h3{font-size:22px}
+p{margin:0 0 10px;max-width:60ch}
+.band{padding:clamp(28px,4vw,56px) max(5vw,16px)}
+.wrap{max-width:960px;margin:0 auto}
 .white{background:var(--card)}
-.lede{font-size:19px;margin-top:12px}
-.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,2.5vw,24px)}
+.card{background:var(--card);border:3px solid var(--line);border-radius:20px;padding:18px}
 .white .card{background:var(--bg)}
-.fig{position:relative;min-height:330px}
-.fig>svg{position:absolute;inset:0;width:100%;height:100%}
-svg text{font-family:Jua,"Noto Sans KR",sans-serif;font-size:16px;fill:var(--ink)}
-.btns{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
-button{font:20px/1 Jua,"Noto Sans KR",sans-serif;min-height:48px;padding:0 20px;border-radius:24px;border:3px solid var(--ink);background:var(--card);color:var(--ink);cursor:pointer;box-shadow:0 4px 0 var(--ink)}
-button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
-button:focus-visible{outline:3px solid var(--sky);outline-offset:3px}
-button.go{background:var(--red);color:#fff}
-.score{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
-.score div{border-radius:16px;padding:10px 14px;color:#fff}
-.score b{font-family:Jua,sans-serif;font-size:34px;font-weight:400;display:block;line-height:1.1}
-.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(16px,3vw,32px);align-items:center}
-.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}
-.who{text-align:center}
-.who svg{width:100%;max-width:150px;height:auto;display:block;margin:0 auto 6px}
-.who p{margin:0 auto;font-size:15px;color:var(--mute)}
-.floors{display:grid;grid-template-columns:repeat(23,minmax(0,1fr));gap:3px;margin:14px 0 8px}
-.floors i{height:20px;border-radius:4px;background:var(--line);transition:background .15s}
-.floors i.done{background:var(--mint)}
-.floors i.now{background:var(--red)}
-.floors i.next{background:#ffc94a}
-.team{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin-top:12px;max-width:520px}
-.team span{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-family:Jua,sans-serif;color:#fff;font-size:15px}
-.words{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
-.words span{font-family:Jua,sans-serif;font-size:20px;padding:6px 14px;border-radius:14px;background:var(--line)}
-.words .ok{background:var(--mint);color:#fff}
-.words .no{background:#f6c3bd;color:var(--ink);text-decoration:line-through}
-.words .base{background:var(--ink);color:#fff}
-.bar{display:grid;grid-template-columns:max-content minmax(0,1fr) max-content;gap:10px 14px;align-items:center;margin-top:10px}
-.bar .b{height:34px;border-radius:10px}
-.bar .n{font-family:Jua,sans-serif;font-size:22px;white-space:nowrap}
-.quiz{display:grid;gap:16px}
-.q .btns button{font-size:18px}
-.fb{min-height:1.7em;font-weight:700}
-.gl{font-size:15px;color:var(--mute)}
-.gl dt{font-weight:700;color:var(--ink);margin-top:8px}
-.gl dd{margin:0}
-a{color:var(--sky)}
-@media(max-width:700px){.two{grid-template-columns:minmax(0,1fr)}.three{grid-template-columns:minmax(0,1fr)}.floors{grid-template-columns:repeat(12,minmax(0,1fr))}.who{display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px;text-align:left;align-items:center}.who svg{margin:0}}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.day{display:grid;grid-template-columns:7.5em minmax(0,1fr);gap:10px 14px;align-items:center;margin-top:20px}
+.day .lab{font-family:Jua,sans-serif;font-size:19px}
+.bar{display:flex;gap:0;height:44px;border-radius:12px;overflow:hidden;background:var(--line)}
+.bar i{display:block;height:100%}
+.w{background:var(--red)}.g{background:repeating-linear-gradient(45deg,#f0dfa8 0 6px,#e6cf8a 6px 12px)}.m{background:var(--mint)}
+.key{font-size:15px;color:var(--mute);margin-top:10px}
+.key i{display:inline-block;width:12px;height:12px;border-radius:3px;margin:0 4px 0 12px;vertical-align:-1px}
+.list{display:grid;gap:12px}
+.les{display:grid;grid-template-columns:56px minmax(0,1fr);gap:4px 14px;align-items:start}
+.les .n{grid-row:span 2;width:56px;height:56px;border-radius:50%;background:var(--red);color:#fff;font-family:Jua,sans-serif;font-size:26px;display:grid;place-items:center}
+.les p{margin:0;color:var(--mute)}
+.les small{display:block;font-size:14px;color:var(--mute);margin-top:4px}
+.chk{display:grid;gap:8px;margin-top:6px}
+.chk label{display:flex;gap:12px;align-items:center;min-height:48px;padding:6px 14px;border-radius:14px;background:var(--bg);cursor:pointer;font-size:17px}
+.chk input{width:24px;height:24px;accent-color:var(--mint);flex:none}
+#cnt{font-family:Jua,sans-serif;font-size:24px;margin-top:12px}
+footer{font-size:14px;color:var(--mute)}
+a{color:#3a6fd8}
+@media(max-width:560px){.day{grid-template-columns:minmax(0,1fr)}.day .lab{margin-bottom:-6px}}
 </style>
 </head>
 <body>
 
 <header class="band"><div class="wrap">
-<h1>AI 칩은 어떻게 더 빨리 일할까?</h1>
-<p class="lede">구글이 만든 AI 칩 <b>TPU</b>를 <b>주방의 요리사</b>라고 생각해 봐요. 요리사는 엄청 빠른데, 재료가 멀리 있는 창고에 있어요. 재료를 가지러 왔다 갔다 하다 보면 시간이 다 가 버리죠. 어떻게 하면 더 빨라질까요? 아래 <b>요리 시합</b>을 시작해 보세요!</p>
-
-<div class="card" style="margin-top:20px">
-<div class="fig" id="race"><svg aria-label="두 주방의 요리 시합"></svg></div>
-<div class="btns"><button class="go" id="start">요리 시합 시작!</button><button id="reset">처음부터</button></div>
-<div class="score">
-<div style="background:var(--sky)">혼자 하는 요리사<b id="sa">0 접시</b></div>
-<div style="background:var(--red)">조수와 함께하는 요리사<b id="sb">0 접시</b></div>
+<h1>메가커널처럼 살아 보기</h1>
+<p style="font-size:19px;margin-top:12px">AI 칩 TPU는 일을 수백 조각으로 나눠 멈췄다 섰다 하지 않아요. <b>할 일 전체를 하나의 흐름(메가커널)</b>으로 묶고, 지금 일을 하는 동안 <b>다음 일을 미리 준비</b>해요. 그랬더니 1.5배 넘게 빨라졌어요. 우리 하루도 똑같이 할 수 있어요.</p>
+<div class="day">
+<span class="lab">멈칫멈칫 하루</span>
+<div class="bar" aria-label="일과 멍때림이 번갈아 나오는 하루"><i class="g" style="width:8%"></i><i class="w" style="width:10%"></i><i class="g" style="width:9%"></i><i class="w" style="width:8%"></i><i class="g" style="width:12%"></i><i class="w" style="width:10%"></i><i class="g" style="width:10%"></i><i class="w" style="width:9%"></i><i class="g" style="width:24%"></i></div>
+<span class="lab">메가커널 하루</span>
+<div class="bar" aria-label="일이 이어지고 남는 시간이 생기는 하루"><i class="w" style="width:12%"></i><i class="w" style="width:10%;opacity:.8"></i><i class="w" style="width:11%"></i><i class="w" style="width:10%;opacity:.8"></i><i class="m" style="width:57%"></i></div>
 </div>
-<p id="msg" style="margin:12px 0 0;font-weight:700"></p>
-</div>
+<p class="key"><i class="w"></i>할 일 <i class="g"></i>"다음 뭐 하지?" 기다리는 시간 <i class="m"></i>남는 자유 시간</p>
 </div></header>
 
 <section class="band white"><div class="wrap">
-<h2>주방 친구들을 소개할게요</h2>
-<p>TPU 안에는 세 친구가 살아요. 진짜 이름은 어렵지만, 주방으로 바꾸면 쉬워요.</p>
-<div class="three">
-<div class="who card">
-<svg viewBox="0 0 150 110" aria-hidden="true"><rect x="10" y="20" width="130" height="85" rx="10" fill="#c98b5a"/><rect x="10" y="20" width="130" height="16" rx="8" fill="#a86b3c"/><g fill="#ffc94a"><rect x="22" y="46" width="24" height="24" rx="4"/><rect x="52" y="46" width="24" height="24" rx="4"/><rect x="82" y="46" width="24" height="24" rx="4"/><rect x="112" y="46" width="18" height="24" rx="4"/><rect x="22" y="76" width="24" height="22" rx="4"/><rect x="52" y="76" width="24" height="22" rx="4"/><rect x="82" y="76" width="24" height="22" rx="4"/></g></svg>
-<div><h3>큰 창고 (HBM)</h3><p>재료(AI가 외운 지식)가 아주 많이 들어 있어요. 하지만 주방에서 <b>멀어요</b>.</p></div>
-</div>
-<div class="who card">
-<svg viewBox="0 0 150 110" aria-hidden="true"><rect x="15" y="50" width="120" height="14" rx="5" fill="#2fb39a"/><rect x="25" y="64" width="10" height="40" fill="#22806e"/><rect x="115" y="64" width="10" height="40" fill="#22806e"/><circle cx="45" cy="40" r="12" fill="#e8483b"/><circle cx="75" cy="38" r="14" fill="#ffc94a"/><rect x="95" y="28" width="22" height="22" rx="4" fill="#5b8def"/></svg>
-<div><h3>조리대 (VMEM)</h3><p>요리사 바로 옆에 있는 작은 탁자예요. 여기 올려 두면 <b>바로</b> 쓸 수 있어요.</p></div>
-</div>
-<div class="who card">
-<svg viewBox="0 0 150 110" aria-hidden="true"><rect x="55" y="6" width="40" height="22" rx="8" fill="#fff" stroke="#3a2a1f" stroke-width="3"/><circle cx="75" cy="44" r="18" fill="#f6c79c"/><circle cx="68" cy="42" r="2.5" fill="#3a2a1f"/><circle cx="82" cy="42" r="2.5" fill="#3a2a1f"/><path d="M68 51q7 6 14 0" stroke="#3a2a1f" stroke-width="2.5" fill="none"/><rect x="52" y="62" width="46" height="42" rx="12" fill="#fff" stroke="#3a2a1f" stroke-width="3"/></svg>
-<div><h3>요리사 (계산 장치)</h3><p>엄청나게 빠르게 계산해요. 그런데 <b>재료가 없으면</b> 아무것도 못 해요.</p></div>
-</div>
-</div>
-</div></section>
-
-<section class="band"><div class="wrap two">
-<div>
-<h2>비밀 1: 다음 재료를 미리 가져다 놓기</h2>
-<p>예전에는 요리를 <b>작은 일 수백 개</b>로 쪼개서 하나 끝날 때마다 "다음 일 뭐예요?" 하고 기다렸어요. 그동안 창고 가는 길은 텅 비어 있었죠.</p>
-<p>그래서 개발자들은 모든 일을 <b>커다란 레시피 한 장</b>에 몽땅 적었어요. 이걸 <b>메가커널</b>이라고 불러요. 레시피가 한 장이니 조수는 다음에 뭐가 필요한지 미리 알고, 요리사가 지금 요리하는 동안 <b>다음 재료를 미리</b> 조리대에 올려놓아요.</p>
-</div>
-<div class="card">
-<h3>AI가 글자 하나를 만들 때 = 92층 건물 오르기</h3>
-<p style="font-size:15px;color:var(--mute)">Kimi K3라는 AI는 글자 하나를 만들 때 92단계를 거쳐요. 빨간 칸이 지금 하는 단계, 노란 칸은 조수가 미리 재료를 가져오는 다음 단계예요.</p>
-<div class="floors" id="floors"></div>
-<p id="fstat" style="font-weight:700;margin:0"></p>
-<div class="btns"><button class="go" id="fgo">92층 오르기</button></div>
-</div>
-</div></section>
-
-<section class="band white"><div class="wrap two">
-<div class="card">
-<h3>요리사 32명이 한 팀!</h3>
-<div class="team" id="team"></div>
-<p style="font-size:15px;color:var(--mute);margin-top:10px">TPU 칩 16개 안에 요리사가 32명 있어요. 같은 색끼리 한 조예요.</p>
-</div>
-<div>
-<h2>비밀 2: 나눠서 같이 하기</h2>
-<p>요리가 너무 크면 한 명이 다 못 해요. 그래서 <b>32명의 요리사</b>가 일을 나눠요. 어떤 요리사는 국을, 어떤 요리사는 반찬을 맡는 것처럼요.</p>
-<p>이때 중요한 건 <b>서로 말을 너무 많이 하지 않는 것</b>이에요. 멀리 있는 친구랑 이야기하면 시간이 걸리니까, 가까운 친구끼리 조를 짜요.</p>
+<h2>메가커널에서 배우는 5가지</h2>
+<div class="list">
+<div class="card les"><span class="n">1</span><h3>다음 할 일을 미리 꺼내 두기</h3><p>칩은 지금 계산하는 동안 다음 재료를 미리 가져와요. 밤에 내일 가방을 싸 두면 아침에 허둥대지 않아요.<small>칩에서는: 프리페치</small></p></div>
+<div class="card les"><span class="n">2</span><h3>잘게 끊지 말고 한 흐름으로</h3><p>일을 시작하고 멈출 때마다 시간이 새요. 비슷한 일은 한 번에 묶어서 쭉 하세요. 숙제는 숙제끼리, 정리는 정리끼리.<small>칩에서는: 커널 수백 개를 하나로</small></p></div>
+<div class="card les"><span class="n">3</span><h3>지금 필요한 것만 가까이</h3><p>칩 옆의 작은 메모리엔 지금 쓸 것만 올려요. 책상 위에도 지금 하는 일에 필요한 것만 두세요.<small>칩에서는: VMEM 관리</small></p></div>
+<div class="card les"><span class="n">4</span><h3>나눠서 같이, 말은 꼭 필요한 만큼</h3><p>32개 코어가 일을 나누되, 멀리 있는 코어와는 대화를 줄여요. 친구와 역할을 나누고 꼭 필요한 것만 주고받아요.<small>칩에서는: 32코어 분할</small></p></div>
+<div class="card les"><span class="n">5</span><h3>일단 해 보고, 틀리면 고치기</h3><p>작은 도우미가 먼저 여러 개를 추측하고 큰 AI는 한 번에 확인만 해요. 완벽하게 준비하느라 멈추기보다 먼저 해 보고 고치는 게 빨라요.<small>칩에서는: 추측 디코딩</small></p></div>
 </div>
 </div></section>
 
 <section class="band"><div class="wrap">
-<h2>비밀 3: 미리 맞히기 게임</h2>
-<p>AI는 글을 <b>한 글자씩</b> 써요. 그런데 꼬마 도우미가 다음 낱말 7개를 <b>미리 맞혀 보고</b>, 큰 AI는 한 번에 쫙 <b>채점</b>만 해요. 맞힌 데까지는 한 번에 통과! 틀린 곳부터는 다시 해요.</p>
+<h2>오늘 해 본 메가커널 습관</h2>
 <div class="card">
-<div class="words" id="words"></div>
-<p id="wmsg" style="font-weight:700"></p>
-<div class="btns"><button class="go" id="wgo">꼬마 도우미, 맞혀 봐!</button></div>
-<p style="font-size:15px;color:var(--mute);margin:0">한 번 채점하는 데 걸리는 시간은 거의 같아요. 그러니 많이 맞힐수록 글이 빨리 써져요. 실제로는 평균 <b>6개</b>쯤 한 번에 통과해요.</p>
+<div class="chk" id="chk">
+<label><input type="checkbox" id="c1">내일 준비물을 미리 챙겼다</label>
+<label><input type="checkbox" id="c2">비슷한 일을 한 번에 묶어서 했다</label>
+<label><input type="checkbox" id="c3">책상 위에 필요한 것만 두었다</label>
+<label><input type="checkbox" id="c4">친구·가족과 일을 나눴다</label>
+<label><input type="checkbox" id="c5">망설이지 않고 일단 시작했다</label>
 </div>
-</div></section>
-
-<section class="band white"><div class="wrap">
-<h2>그래서 얼마나 빨라졌을까?</h2>
-<p>같은 AI(Kimi K3)에게 1초 동안 글을 쓰게 했어요. 칩 16개끼리 비교한 결과예요.</p>
-<div class="bar">
-<span>TPU + 비밀 세 가지</span><div class="b" style="width:100%;background:var(--red)"></div><span class="n">709 글자</span>
-<span>다른 회사 칩 (GB200)</span><div class="b" style="width:64%;background:var(--sky)"></div><span class="n">452 글자</span>
+<p id="cnt">0 / 5</p>
 </div>
-<p style="margin-top:14px">TPU가 <b>1.5배 넘게</b> 빨랐어요! 칩이 더 힘센 게 아니에요. 오히려 창고에서 재료 가져오는 속도는 상대 칩이 조금 더 빨라요. <b>일하는 순서를 똑똑하게 짠 덕분</b>이에요. 그리고 빨라졌다고 답이 틀려지지도 않았어요.</p>
-<p style="font-size:15px;color:var(--mute)">여기서 "글자"는 AI가 글을 쓰는 작은 조각(토큰)을 말해요.</p>
-</div></section>
-
-<section class="band"><div class="wrap">
-<h2>퀴즈로 확인해 봐요</h2>
-<div class="quiz" id="quiz"></div>
 </div></section>
 
 <footer class="band white"><div class="wrap">
-<h2 style="font-size:26px">선생님과 어른을 위한 설명</h2>
-<dl class="gl">
-<dt>요리사 = TensorCore, 조리대 = VMEM(코어당 64 MiB), 창고 = HBM</dt><dd>AI가 답을 만드는 단계(디코딩)는 계산보다 HBM에서 가중치를 읽어오는 속도에 막혀요.</dd>
-<dt>레시피 한 장 = 메가커널</dt><dd>Kimi K3의 92개 레이어 전체를 Pallas 프로그램 하나로 작성해, 레이어 N을 계산하는 동안 레이어 N+1의 가중치를 미리 DMA로 가져옵니다. 컴파일 시간도 30분 이상에서 90초 미만으로 줄었어요.</dd>
-<dt>32명의 요리사 = TPU v7 16개의 TensorCore 32개</dt><dd>어텐션 헤드는 32개로, 전문가(MoE)는 TP4 × EP8로 나눕니다.</dd>
-<dt>미리 맞히기 = DSpark 추측 디코딩</dt><dd>앵커 1개와 추측 7개를 한 번에 검증해요. 스텝당 약 8.5 ms, 평균 수락 길이 6 → 초당 약 709 토큰.</dd>
-<dt>주의</dt><dd>요리 시합 애니메이션은 원리를 보여주는 그림이며 실제 측정값이 아니에요.</dd>
-</dl>
-<p class="gl" style="margin-top:14px">출처: <a href="https://inferact.ai/blog/tpu-megakernels">Inferact 블로그 "700 TPS on Kimi K3"</a> · <a href="https://github.com/inferact/tpu-megakernels">inferact/tpu-megakernels (GitHub)</a></p>
+<p>바탕 이야기: Inferact 팀은 TPU v7 16개에서 AI 모델 Kimi K3를 메가커널로 돌려 초당 709토큰을 냈어요(같은 수의 GB200은 452). <a href="https://inferact.ai/blog/tpu-megakernels">Inferact 블로그</a> · <a href="https://github.com/inferact/tpu-megakernels">GitHub</a></p>
 </div></footer>
 
 <script>
 {
-const $=s=>document.querySelector(s);
-const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-/* ---- race ---- */
-const svg=$('#race svg');
-const U=900; // ms per time unit
-let t=0,run=false,last=0,raf=0;
-const chef=(x,y,c)=>`<g transform="translate(${x},${y})"><rect x="-13" y="-58" width="26" height="14" rx="5" fill="#fff" stroke="#3a2a1f" stroke-width="2.5"/><circle cy="-32" r="13" fill="#f6c79c"/><circle cx="-4" cy="-33" r="1.8" fill="#3a2a1f"/><circle cx="4" cy="-33" r="1.8" fill="#3a2a1f"/><rect x="-15" y="-19" width="30" height="26" rx="9" fill="${c}"/></g>`;
-const box=(x,y)=>`<rect x="${x-9}" y="${y-48}" width="18" height="15" rx="3" fill="#ffc94a" stroke="#3a2a1f" stroke-width="2"/>`;
-function lane(y,W,label,col,mode){
-  const sx=W<520?36:60, cx=W-(W<520?70:110), p=[];
-  p.push(`<text x="${sx-24}" y="${y-78}">${label}</text>`);
-  p.push(`<rect x="${sx-30}" y="${y-60}" width="56" height="62" rx="8" fill="#c98b5a"/><rect x="${sx-30}" y="${y-60}" width="56" height="12" rx="6" fill="#a86b3c"/><text x="${sx-2}" y="${y+22}" text-anchor="middle" style="font-size:14px">창고</text>`);
-  p.push(`<line x1="${sx+30}" x2="${cx-40}" y1="${y+4}" y2="${y+4}" stroke="#f0dfa8" stroke-width="6" stroke-dasharray="2 10" stroke-linecap="round"/>`);
-  p.push(`<rect x="${cx-34}" y="${y-14}" width="96" height="14" rx="5" fill="#2fb39a"/><text x="${cx+14}" y="${y+22}" text-anchor="middle" style="font-size:14px">조리대</text>`);
-  const L=cx-sx-30;
-  if(mode==='a'){
-    const ph=t%3;let x,carry=false,cooking=false;
-    if(ph<1)x=cx-L*ph; else if(ph<2){x=sx+30+L*(ph-1)-30;carry=true} else {x=cx;cooking=true}
-    p.push(chef(x,y,col)); if(carry)p.push(box(x,y));
-    if(cooking)p.push(pot(cx+34,y,ph-2));
-  }else{
-    const ph=t%2;let hx,carry;
-    if(ph<1){hx=cx-L*ph;carry=false}else{hx=sx+L*(ph-1);carry=true}
-    p.push(chef(hx,y,'#ffc94a')); if(carry)p.push(box(hx,y));
-    p.push(`<text x="${hx}" y="${y+40}" text-anchor="middle" style="font-size:13px;fill:#6b5646">조수</text>`);
-    const cooking=t>=2&&(t%2)<1;
-    p.push(chef(cx+34,y,col)); if(cooking)p.push(pot(cx+34,y,t%2,true));
-  }
-  return p.join('');
-}
-function pot(x,y,k,small){const h=6+10*Math.sin(k*Math.PI);return `<ellipse cx="${x}" cy="${y-16}" rx="${small?10:14}" ry="${h/2+2}" fill="#e8483b" opacity=".85"/>`}
-function dishes(){const a=Math.floor(t/3),b=t<3?0:Math.floor((t-3)/2)+1;return [a,b]}
-function draw(){
-  const W=svg.clientWidth,H=svg.clientHeight;
-  svg.innerHTML=lane(H*0.36,W,'혼자 하는 요리사','#5b8def','a')+lane(H*0.86,W,'조수와 함께하는 요리사','#e8483b','b');
-  const [a,b]=dishes();
-  $('#sa').textContent=a+' 접시';$('#sb').textContent=b+' 접시';
-  $('#msg').textContent=t<0.05?'버튼을 눌러 보세요.':b>a?`조수가 있는 쪽이 ${b-a}접시 앞서요! 요리사가 재료를 기다리지 않으니까요.`:'두 요리사가 출발했어요…';
-}
-const roR=new ResizeObserver(draw);roR.observe(svg);
-function loop(n){if(!run)return;t+=(n-last)/U;last=n;if(t>24){t=24;run=false;$('#start').textContent='다시 시작!'}draw();if(run)raf=requestAnimationFrame(loop)}
-$('#start').onclick=()=>{if(t>=24)t=0;if(reduce){t=24;draw();return}run=!run;$('#start').textContent=run?'잠깐 멈춤':'계속하기';if(run){last=performance.now();raf=requestAnimationFrame(loop)}};
-$('#reset').onclick=()=>{run=false;cancelAnimationFrame(raf);t=0;$('#start').textContent='요리 시합 시작!';draw()};
-
-/* ---- 92 floors ---- */
-const fl=$('#floors');fl.innerHTML=Array.from({length:92},()=>'<i></i>').join('');
-const fc=[...fl.children];let f=-1,ft=0;
-function showF(){fc.forEach((c,i)=>c.className=i<f?'done':i===f?'now':i===f+1?'next':'');$('#fstat').textContent=f<0?'아직 출발 전이에요.':f>=92?'92층 도착! 글자 하나 완성!':`${f+1}층에서 일하는 중 · 조수는 ${Math.min(f+2,92)}층 재료를 미리 가져오는 중`}
-$('#fgo').onclick=()=>{clearInterval(ft);f=0;showF();ft=setInterval(()=>{f++;showF();if(f>=92)clearInterval(ft)},reduce?5:70)};
-showF();
-
-/* ---- team ---- */
-const tc=['#e8483b','#2fb39a','#5b8def','#ffb020','#9b6bd6','#e86fae','#3a9ad9','#7cb342'];
-$('#team').innerHTML=Array.from({length:32},(_,i)=>`<span style="background:${tc[Math.floor(i/4)]}">${i+1}</span>`).join('');
-
-/* ---- guessing game ---- */
-const base='오늘';
-const answer=['아침에','우유를','마시고','학교에','가서','친구와','놀았다'];
-const tries=[
-  ['아침에','우유를','마시고','학교에','가서','친구와','놀았다'],
-  ['아침에','우유를','마시고','학교에','가서','밥을','먹었다'],
-  ['아침에','빵을','먹고','학교에','갔다','그리고','잤다'],
-  ['아침에','우유를','마시고','공원에','가서','친구와','놀았다'],
-  ['저녁에','우유를','마시고','학교에','가서','친구와','놀았다']
-];
-let ti=-1;
-function showW(){
-  if(ti<0){$('#words').innerHTML=`<span class="base">${base}</span>`+answer.map(()=>'<span>?</span>').join('');$('#wmsg').textContent='큰 AI가 "오늘"까지 썼어요. 다음 낱말 7개를 맞혀 볼까요?';return}
-  const g=tries[ti];let ok=0;while(ok<7&&g[ok]===answer[ok])ok++;
-  $('#words').innerHTML=`<span class="base">${base}</span>`+g.map((w,i)=>`<span class="${i<ok?'ok':'no'}">${w}</span>`).join('');
-  const got=ok+(ok<7?1:0);
-  $('#wmsg').textContent=ok===7?'7개 모두 정답! 한 번 채점으로 낱말 7개를 얻었어요.':`${ok}개 맞혔어요. 큰 AI가 틀린 자리를 고쳐 주니까 한 번 채점으로 낱말 ${got}개를 얻었어요. 한 글자씩 썼다면 ${got}번 걸렸을 거예요!`;
-}
-$('#wgo').onclick=()=>{ti=(ti+1)%tries.length;showW()};
-showW();
-
-/* ---- quiz ---- */
-const Q=[
-  ['요리사(계산 장치)가 느려지는 가장 큰 이유는?',['손이 느려서','재료를 기다려서','배가 고파서'],1,'맞아요! 요리사는 빠른데 멀리 있는 창고에서 재료가 오기를 기다리느라 느려져요.'],
-  ['메가커널은 무엇과 비슷할까요?',['모든 일을 적은 커다란 레시피 한 장','더 큰 냉장고','요리사를 쉬게 하는 의자'],0,'정답! 레시피가 한 장이라 조수가 다음 재료를 미리 가져올 수 있어요.'],
-  ['미리 맞히기 게임에서 낱말을 많이 맞히면?',['글이 더 느려져요','한 번에 더 많이 써져요','답이 틀려져요'],1,'딩동댕! 채점 시간은 같으니 많이 맞힐수록 빨라지고, 틀린 건 큰 AI가 고쳐서 답은 그대로예요.']
-];
-$('#quiz').innerHTML=Q.map((q,i)=>`<div class="card q"><h3>${i+1}. ${q[0]}</h3><div class="btns">${q[1].map((o,j)=>`<button data-q="${i}" data-a="${j}">${o}</button>`).join('')}</div><p class="fb" id="fb${i}"></p></div>`).join('');
-document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const q=Q[+b.dataset.q],ok=+b.dataset.a===q[2];const fb=$('#fb'+b.dataset.q);fb.textContent=ok?q[3]:'아쉬워요, 다시 골라 볼까요?';fb.style.color=ok?'var(--mint)':'var(--red)'});
+const boxes=[...document.querySelectorAll('#chk input')],out=document.getElementById('cnt');
+const msg=['','좋은 출발!','흐름이 생기고 있어요','절반 넘었어요!','거의 메가커널!','오늘은 완벽한 메가커널 하루!'];
+const upd=()=>{const n=boxes.filter(b=>b.checked).length;out.textContent=`${n} / 5 ${msg[n]}`;try{localStorage.setItem('mk',JSON.stringify(boxes.map(b=>b.checked)))}catch(e){}};
+try{const s=JSON.parse(localStorage.getItem('mk')||'[]');boxes.forEach((b,i)=>b.checked=!!s[i])}catch(e){}
+boxes.forEach(b=>b.onchange=upd);upd();
 }
 </script>
 </body>
